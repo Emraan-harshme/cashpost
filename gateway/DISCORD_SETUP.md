@@ -60,3 +60,26 @@ Then run **/setup** in the channel where posters should pick up tasks.
 - For `OPERATOR_LOG_CHANNEL_ID` / `STAFF_ROLE_ID`: with Developer Mode on,
   right-click a channel/role → **Copy ID**.
 - To get a channel/role ID you must have Developer Mode enabled (step 2).
+
+## Optional — Leah remote control (owner-triggered invites / broadcasts)
+
+**Who creates `LEAH_KEY`?** The **Redwire owner** generates it and gives it to you
+during onboarding — you just paste it into your gateway env. (That way the owner
+already has the key and can issue commands immediately; use a different key per
+operator so any one can be revoked independently.)
+
+Generate one (owner side):
+
+```
+openssl rand -hex 32
+```
+
+Set the secret `LEAH_KEY` on the gateway (with `RUN_BOT=true`). The Redwire owner can
+then order this bot to act **without ever holding your bot token**:
+
+- `POST /admin/invite` — bot creates a server invite and returns the link.
+  `curl -X POST https://your-gateway/admin/invite -H "x-leah-key: <LEAH_KEY>"`
+- `POST /admin/broadcast` — bot DMs your members. Body: `{ "message": "Hi {username}!", "dryRun": true }`
+  `{username}` is replaced per member; start with `"dryRun": true` to preview counts.
+
+These endpoints only exist while the bot is running. Leave `LEAH_KEY` blank to disable.

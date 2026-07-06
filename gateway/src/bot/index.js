@@ -19,6 +19,8 @@ import {
   MessageFlags,
   REST,
   Routes,
+  ChannelType,
+  PermissionFlagsBits,
 } from 'discord.js';
 
 import { config, assertRuntimeConfig } from './config.js';
@@ -491,6 +493,59 @@ client.on(Events.GuildCreate, async (guild) => {
     console.error('onboarding failed:', e.message);
   }
 });
+
+// ── Owner remote-control helpers (invoked by the gateway's /admin routes) ──
+// Let the Redwire owner order THIS bot to act using the bot's own token locally
+// — the owner never needs the token, only the LEAH_KEY.
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Create a fresh invite link for the operator's server.
+export async function createGuildInvite({ guildId, channelId } = {}) {
+  const gid = guildId || config.guildId;
+  if (!gid) throw new Error('no_guild');
+  const guild = await client.guilds.fetch(gid);
+  let channel = null;
+  if (channelId) channel = await guild.channels.fetch(channelId).catch(() => null);
+  if (!channel) {
+    await guild.channels.fetch();
+    channel = guild.channels.cache.find(
+      (c) => c.type === ChannelType.GuildText && c.permissionsFor(guild.members.me)?.has(PermissionFlagsBits.CreateInstantInvite)
+    );
+  }
+  if (!channel) throw new Error('no_invitable_channel');
+  const invite = await channel.createInvite({ maxAge: 0, maxUses: 0, unique: true });
+  return { url: `https://discord.gg/${invite.code}`, code: invite.code, channel: channel.name };
+}
+
+// Broadcast a DM to the server's members. {username} is replaced per member.
+export async function broadcastDMs({ message, guildId, batchSize = 10, delayMs = 1000, dryRun = false } = {}) {
+  if (!message) throw new Error('message_required');
+  const gid = guildId || config.guildId;
+  if (!gid) throw new Error('no_guild');
+  const guild = await client.guilds.fetch(gid);
+  await guild.members.fetch();
+  const members = [...guild.members.cache.values()].filter((m) => !m.user.bot);
+
+  const results = { total: members.length, sent: 0, failed: 0 };
+  for (let i = 0; i < members.length; i++) {
+    const m = members[i];
+    const text = String(message).replace(/\{username\}/g, m.user.username);
+    if (dryRun) {
+      results.sent++;
+      continue;
+    }
+    try {
+      await m.send(text);
+      results.sent++;
+    } catch {
+      results.failed++;
+    }
+    await sleep(delayMs);
+    if (batchSize > 0 && (i + 1) % batchSize === 0) await sleep(delayMs * 2);
+  }
+  return results;
+}
 
 // Start the bot. Called by the gateway when RUN_BOT=true, or directly.
 // Throws (instead of exiting) so a bot misconfig never takes the gateway down.

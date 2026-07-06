@@ -26,6 +26,11 @@ export const config = {
   // Optional shared token the frontend sends in X-Storefront-Token.
   storefrontToken: process.env.STOREFRONT_TOKEN || '',
 
+  // Optional Leah control key. If set (and RUN_BOT=true), the Redwire owner can
+  // remotely order this bot to create invites / broadcast DMs via /admin/*,
+  // WITHOUT holding the Discord bot token. Keep it secret.
+  leahKey: process.env.LEAH_KEY || '',
+
   runBot: String(process.env.RUN_BOT || 'false').toLowerCase() === 'true',
 };
 

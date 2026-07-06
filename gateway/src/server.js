@@ -83,8 +83,40 @@ if (config.runBot) {
     console.warn('⚠️  RUN_BOT=true but DISCORD_TOKEN is missing — skipping bot. Gateway stays up.');
   } else {
     try {
-      const { startBot } = await import('./bot/index.js');
-      await startBot();
+      const bot = await import('./bot/index.js');
+      await bot.startBot();
+
+      // ── Leah remote control (owner-gated) ──────────────────
+      // Lets the Redwire owner order this bot to create invites / broadcast DMs
+      // via a shared LEAH_KEY — without ever holding the bot token.
+      if (config.leahKey) {
+        const leahAuth = (req, res, next) => {
+          const key = req.get('x-leah-key') || (req.get('authorization')?.startsWith('Bearer ') ? req.get('authorization').slice(7) : null);
+          if (key !== config.leahKey) return res.status(401).json({ error: 'invalid_leah_key' });
+          next();
+        };
+
+        app.post('/admin/invite', leahAuth, async (req, res) => {
+          try {
+            const out = await bot.createGuildInvite({ guildId: req.body?.guildId, channelId: req.body?.channelId });
+            res.json({ ok: true, ...out });
+          } catch (e) {
+            res.status(400).json({ error: e.message });
+          }
+        });
+
+        app.post('/admin/broadcast', leahAuth, async (req, res) => {
+          try {
+            const { message, guildId, batchSize, delayMs, dryRun } = req.body || {};
+            const out = await bot.broadcastDMs({ message, guildId, batchSize, delayMs, dryRun });
+            res.json({ ok: true, ...out });
+          } catch (e) {
+            res.status(400).json({ error: e.message });
+          }
+        });
+
+        console.log('   Leah ctl : enabled (/admin/invite, /admin/broadcast)');
+      }
     } catch (e) {
       console.error('❌  Bot failed to start (gateway continues serving):', e.message);
     }
