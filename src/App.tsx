@@ -114,7 +114,7 @@ export default function App() {
       <main className="max-w-4xl mx-auto px-4 py-6">
         {view === 'board' && <TaskBoard username={username} onClaimSuccess={handleClaimSuccess} showNotification={showNotification} />}
         {view === 'claim' && activeClaim && <ClaimView claim={activeClaim} onClearClaim={handleClearClaim} showNotification={showNotification} setView={setView} />}
-        {view === 'history' && <HistoryView showNotification={showNotification} />}
+        {view === 'history' && <HistoryView username={username} showNotification={showNotification} />}
         {view === 'earnings' && <EarningsView username={username} showNotification={showNotification} />}
       </main>
 

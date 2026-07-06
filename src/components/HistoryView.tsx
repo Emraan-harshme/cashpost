@@ -5,10 +5,11 @@ import LoadingSpinner from './LoadingSpinner';
 import { RefreshCw, FileText } from 'lucide-react';
 
 interface HistoryViewProps {
+  username: string;
   showNotification: (msg: string, type: 'success' | 'error' | 'warning') => void;
 }
 
-export default function HistoryView({ showNotification }: HistoryViewProps) {
+export default function HistoryView({ username, showNotification }: HistoryViewProps) {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -18,7 +19,7 @@ export default function HistoryView({ showNotification }: HistoryViewProps) {
   const fetchHistory = async (isRefresh = false, nextCursor?: string) => {
     try {
       if (isRefresh) setRefreshing(true);
-      const url = `/submissions?limit=50${nextCursor ? `&cursor=${nextCursor}` : ''}`;
+      const url = `/submissions?limit=50${nextCursor ? `&cursor=${nextCursor}` : ''}&username=${encodeURIComponent(username)}`;
       const data = await apiFetch(url);
       const newSubs = Array.isArray(data) ? data : data.submissions || [];
       if (nextCursor) {

@@ -16,7 +16,7 @@ export default function EarningsView({ username, showNotification }: EarningsVie
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const data = await apiFetch('/balance');
+        const data = await apiFetch('/balance?username=' + encodeURIComponent(username));
         setBalance(data);
       } catch (err) {
         showNotification('Vault sync failed', 'error');
