@@ -76,11 +76,14 @@ export function taskEmbed(claim, workerTag) {
     if (claim.targetPostUrl) {
       e.addFields({ name: '🔗 Comment on this thread', value: claim.targetPostUrl });
     }
-    if (comments.length) {
+    if (claim.assigned_comment) {
+      // Server reserved ONE specific comment for this poster — no picking, no race.
+      e.addFields({ name: '💬 Post exactly this comment', value: String(claim.assigned_comment).slice(0, 1024) });
+    } else if (comments.length) {
       const numbered = comments.map((c, i) => `**${i + 1}.** ${String(c).replace(/\n+/g, ' ')}`);
       const chunks = chunkLines(numbered, 1000).slice(0, 4);
       chunks.forEach((chunk, i) => {
-        e.addFields({ name: i === 0 ? `💬 Pick ONE comment to post (${comments.length})` : '💬 …more', value: chunk });
+        e.addFields({ name: i === 0 ? `💬 Comment options (${comments.length})` : '💬 …more', value: chunk });
       });
     } else {
       e.addFields({ name: '💬 Comment', value: 'Your operator will provide the comment text. Check the campaign notes or ask in your ticket.' });

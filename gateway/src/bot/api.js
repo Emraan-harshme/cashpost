@@ -118,5 +118,8 @@ export function enrichClaim(res, campaign, subreddit) {
     nsfw: campaign?.nsfw ?? false,
     first_comment: campaign?.first_comment ?? null,
     targetPostUrl: campaign?.targetPostUrl ?? null,
+    // Server-assigned comment (comment campaigns) — reserved atomically at claim time.
+    assigned_comment: res?.assigned_comment ?? null,
+    assigned_comment_index: res?.assigned_comment_index ?? null,
   };
 }

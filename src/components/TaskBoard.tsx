@@ -57,14 +57,17 @@ export default function TaskBoard({ username, onClaimSuccess, showNotification }
         nsfw: (campaign as any)?.nsfw ?? false,
         first_comment: (campaign as any)?.first_comment ?? null,
         targetPostUrl: (campaign as any)?.targetPostUrl ?? null,
+        assigned_comment: (res as any)?.assigned_comment ?? null,
+        assigned_comment_index: (res as any)?.assigned_comment_index ?? null,
       };
 
       if (String(enrichedClaim.interaction_type || '').toLowerCase().includes('comment') && (campaign as any)?.post_content?.prewrittenComments?.length) {
         const cmts = (campaign as any).post_content.prewrittenComments as string[];
+        const assigned = (enrichedClaim as any).assigned_comment as string | null;
         enrichedClaim.post_content = {
           ...((campaign as any)?.post_content || {}),
-          title: 'Pick ONE comment to post',
-          body: cmts.map((c, i) => `${i + 1}. ${c}`).join('\n\n'),
+          title: assigned ? 'Post exactly this comment' : 'Pick ONE comment to post',
+          body: assigned ? assigned : cmts.map((c, i) => `${i + 1}. ${c}`).join('\n\n'),
         } as any;
       }
 
