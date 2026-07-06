@@ -19,7 +19,7 @@ export const config = {
   clientId: process.env.DISCORD_CLIENT_ID,
   guildId: process.env.DISCORD_GUILD_ID || null,
 
-  operatorName: process.env.OPERATOR_NAME || 'Redwire',
+  operatorName: process.env.OPERATOR_NAME || 'Tasks',
 
   // One task per worker; cooldown before the next one.
   cooldownHours: parseFloat(process.env.TASK_COOLDOWN_HOURS ?? '6'),

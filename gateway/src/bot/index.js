@@ -301,7 +301,7 @@ async function doPaid(interaction) {
     ui.paidEmbed(`<@${target.id}>`, amount, method, reference)
   );
   return interaction.editReply({
-    content: `💸 Recorded a **$${Number(amount).toFixed(2)}** payout to <@${target.id}>${method ? ` via ${payout.methodLabel(method)}` : ''}${reference ? ` (ref: ${reference})` : ''}.\nThis is your own bookkeeping — clears/paid_out are tracked on Redwire.`,
+    content: `💸 Recorded a **$${Number(amount).toFixed(2)}** payout to <@${target.id}>${method ? ` via ${payout.methodLabel(method)}` : ''}${reference ? ` (ref: ${reference})` : ''}.\nThis is your own bookkeeping — clears are tracked by the platform.`,
   });
 }
 

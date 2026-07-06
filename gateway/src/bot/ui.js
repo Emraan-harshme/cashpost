@@ -11,7 +11,7 @@ const money = (n) => `$${Number(n || 0).toFixed(2)}`;
 const relTs = (ms) => `<t:${Math.floor(ms / 1000)}:R>`;
 
 export function brandFooter(embed) {
-  return embed.setFooter({ text: `${config.operatorName} · Redwire poster network` }).setColor(config.color);
+  return embed.setFooter({ text: config.operatorName }).setColor(config.color);
 }
 
 // ── Verify: pending token ────────────────────────────────────
@@ -231,7 +231,7 @@ export function configStatusEmbed(guild) {
   const ok = (b) => (b ? '✅' : '⚠️');
   const apiSet = !!(process.env.REDWIRE_API_KEY && process.env.REDWIRE_API_KEY !== 'dummy_key');
   const lines = [
-    `${ok(apiSet)} Redwire API key ${apiSet ? 'set' : 'missing'}`,
+    `${ok(apiSet)} API key ${apiSet ? 'set' : 'missing'}`,
     `• Delivery mode: **${config.deliveryMode}**`,
     `• Cooldown: **${config.cooldownHours}h** between tasks`,
     `• Reject limit: **${config.rejectLimitPerDay}/day** per worker`,
