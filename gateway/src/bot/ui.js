@@ -35,42 +35,82 @@ export function verifyButtons(username) {
 }
 
 // ── The single task card (delivered privately) ───────────────
+// Split an array of strings into embed-field-sized chunks (<=1024 chars each).
+function chunkLines(lines, max = 1000) {
+  const fields = [];
+  let buf = '';
+  for (const line of lines) {
+    const piece = (buf ? '\n' : '') + line;
+    if ((buf + piece).length > max) {
+      if (buf) fields.push(buf);
+      buf = line.slice(0, max);
+    } else {
+      buf += piece;
+    }
+  }
+  if (buf) fields.push(buf);
+  return fields;
+}
+
 export function taskEmbed(claim, workerTag) {
   const pc = claim.post_content || {};
+  const sub = String(claim.subreddit || '').replace(/^\/?r\//i, '');
+  const type = String(claim.interaction_type || 'post').toLowerCase();
+  const comments = Array.isArray(pc.prewrittenComments) ? pc.prewrittenComments.filter(Boolean) : [];
+  const isComment = type.includes('comment') || comments.length > 0;
+
   const e = new EmbedBuilder()
-    .setTitle(`🎯 Your task · r/${claim.subreddit}`)
+    .setTitle(`🎯 Your task · r/${sub}`)
     .setDescription(
-      `You have **one active task**. Complete it on Reddit, then submit the post link below.\n` +
+      `You have **one active task**. Complete it on Reddit, then submit the ${isComment ? 'comment' : 'post'} link below.\n` +
         `⏳ Claim expires ${relTs(claim.expiresAt)}.`
     )
     .addFields(
       { name: 'Payout', value: money(claim.payout), inline: true },
       { name: 'Tier', value: `${claim.tier ?? '—'}`, inline: true },
-      { name: 'Type', value: `${claim.interaction_type ?? 'post'}`, inline: true }
+      { name: 'Type', value: type, inline: true }
     );
 
-  if (pc.title) e.addFields({ name: '📝 Post title', value: pc.title.slice(0, 1024) });
-  if (pc.body) e.addFields({ name: '📄 Post body', value: pc.body.slice(0, 1024) });
-  if (pc.note || claim.note_to_poster) e.addFields({ name: '📌 Instructions', value: String(pc.note || claim.note_to_poster).slice(0, 1024) });
+  if (isComment) {
+    // The real content for a comment campaign is the pre-written comment list.
+    if (claim.targetPostUrl) {
+      e.addFields({ name: '🔗 Comment on this thread', value: claim.targetPostUrl });
+    }
+    if (comments.length) {
+      const numbered = comments.map((c, i) => `**${i + 1}.** ${String(c).replace(/\n+/g, ' ')}`);
+      const chunks = chunkLines(numbered, 1000).slice(0, 4);
+      chunks.forEach((chunk, i) => {
+        e.addFields({ name: i === 0 ? `💬 Pick ONE comment to post (${comments.length})` : '💬 …more', value: chunk });
+      });
+    } else {
+      e.addFields({ name: '💬 Comment', value: 'Your operator will provide the comment text. Check the campaign notes or ask in your ticket.' });
+    }
+  } else {
+    if (pc.title) e.addFields({ name: '📝 Post title', value: String(pc.title).slice(0, 1024) });
+    if (pc.body) e.addFields({ name: '📄 Post body', value: String(pc.body).slice(0, 1024) });
+    if (pc.hooks?.length) e.addFields({ name: '🪝 Hooks', value: pc.hooks.map((h) => `• ${h}`).join('\n').slice(0, 1024) });
+  }
+
+  if (pc.note || claim.note_to_poster) {
+    e.addFields({ name: '📌 Instructions', value: String(pc.note || claim.note_to_poster).slice(0, 1024) });
+  }
 
   const reqs = [];
   if (claim.verificationPeriodDays > 0) reqs.push(`• Verify time: **${claim.verificationPeriodDays} days**`);
   if (claim.flair) reqs.push(`• Flair: \`${claim.flair}\``);
   if (claim.nsfw) reqs.push('• **NSFW tag required**');
-  if (claim.first_comment) reqs.push(`• First comment: ${String(claim.first_comment).slice(0, 300)}`);
+  if (claim.first_comment) reqs.push(`• Required first comment: ${String(claim.first_comment).slice(0, 300)}`);
   if (claim.image_url) reqs.push(`• [View required image](${claim.image_url})`);
   if (reqs.length) e.addFields({ name: '✅ Requirements', value: reqs.join('\n').slice(0, 1024) });
 
-  if (pc.hooks?.length) e.addFields({ name: '🪝 Hooks', value: pc.hooks.map((h) => `• ${h}`).join('\n').slice(0, 1024) });
-
-  e.addFields({ name: '⚠️ Keep it live', value: 'Keep the post live for at least 2 weeks after it clears. Removing it early may result in suspension.' });
+  e.addFields({ name: '⚠️ Keep it live', value: 'Keep it live for at least 2 weeks after it clears. Removing it early may result in suspension.' });
   if (workerTag) e.addFields({ name: 'Assigned to', value: workerTag, inline: true });
 
   return brandFooter(e);
 }
 
 export function taskButtons(claim) {
-  const subreddit = String(claim.subreddit || '').replace('r/', '');
+  const subreddit = String(claim.subreddit || '').replace(/^\/?r\//i, '');
   const redditUrl = claim.targetPostUrl || `https://www.reddit.com/r/${subreddit}/`;
   return new ActionRowBuilder().addComponents(
     new ButtonBuilder().setCustomId('task_submit').setLabel('Submit post URL').setStyle(ButtonStyle.Success).setEmoji('📮'),
