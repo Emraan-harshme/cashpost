@@ -1,3 +1,4 @@
+import { apiFetch } from './api';
 import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'motion/react';
 import UsernameGate from './components/UsernameGate';
@@ -46,6 +47,9 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    if (activeClaim?.claim_id) {
+      apiFetch('/release', { method: 'POST', body: JSON.stringify({ claim_id: activeClaim.claim_id }) }).catch(() => {});
+    }
     localStorage.removeItem('cashpost_username');
     localStorage.removeItem('cashpost_active_claim');
     setUsername(null);

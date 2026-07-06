@@ -51,6 +51,7 @@ router.get('/campaigns', forward);
 router.post('/claim', forward);
 router.post('/submit', forward);
 router.post('/reject', forward);
+router.post('/release', forward);
 router.get('/submissions', forward);
 router.get('/balance', forward);
 

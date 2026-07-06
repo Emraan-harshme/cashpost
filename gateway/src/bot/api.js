@@ -58,6 +58,9 @@ export const submitPost = (claim_id, post_url) =>
 export const rejectTask = (claim_id, reason) =>
   apiFetch('/reject', { method: 'POST', body: JSON.stringify({ claim_id, reason }) });
 
+export const releaseTask = (claim_id) =>
+  apiFetch('/release', { method: 'POST', body: JSON.stringify({ claim_id }) });
+
 export const getSubmissions = async (username, cursor) => {
   const params = new URLSearchParams({ limit: '50' });
   if (cursor) params.set('cursor', cursor);

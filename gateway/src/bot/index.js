@@ -331,6 +331,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
         return interaction.reply({ embeds: [ui.walletEmbed(store.getWallet(interaction.user.id))], components: [ui.walletButtons()], ...EPH });
       }
       if (name === 'signout') {
+        const rec = store.getUser(interaction.user.id);
+        if (claimIsLive(rec?.activeClaim)) {
+          api.releaseTask(rec.activeClaim.claim_id).catch(() => {});
+        }
         store.clearUser(interaction.user.id);
         return interaction.reply({ content: '👋 Unlinked. Use **/verify** to link again.', ...EPH });
       }
