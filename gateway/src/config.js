@@ -30,9 +30,10 @@ export const config = {
 };
 
 export function assertGatewayConfig() {
+  // Warn (don't crash) so the service still goes "Live" on Render and the logs
+  // show the problem, instead of crash-looping forever in "Deploying".
   if (!config.apiKey) {
-    console.error('❌  REDWIRE_API_KEY is missing. The gateway needs your operator key.');
-    process.exit(1);
+    console.error('❌  REDWIRE_API_KEY is not set — proxy calls will fail until you add it in the service env.');
   }
   if (config.allowedOrigins.length === 0) {
     console.warn('⚠️  ALLOWED_ORIGINS is empty — the gateway will accept any origin. Set it in production.');

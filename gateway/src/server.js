@@ -17,6 +17,14 @@ assertGatewayConfig();
 const app = express();
 app.disable('x-powered-by');
 app.set('trust proxy', 1); // behind Render's proxy
+
+// ── Health checks FIRST — never blocked by CORS/rate-limit/auth ─────
+// Render marks the deploy "Live" only once these return 200.
+const health = (_req, res) => res.status(200).json({ ok: true, bot: config.runBot, ts: Date.now() });
+app.get('/health', health);
+app.get('/healthz', health);
+app.get('/', (_req, res) => res.status(200).send('ok'));
+
 app.use(express.json({ limit: '64kb' }));
 
 // ── CORS: only the operator's own frontend origins ──────────
@@ -34,13 +42,14 @@ app.use(
   })
 );
 
-// ── Rate limiting (per IP) ──────────────────────────────────
+// ── Rate limiting (per IP) — skips health paths ─────────────
 app.use(
   rateLimit({
     windowMs: config.rateLimit.windowMs,
     max: config.rateLimit.max,
     standardHeaders: true,
     legacyHeaders: false,
+    skip: (req) => req.path === '/health' || req.path === '/healthz' || req.path === '/',
     message: { error: 'rate_limited', message: 'Too many requests. Slow down.' },
   })
 );
@@ -55,15 +64,12 @@ if (config.storefrontToken) {
   });
 }
 
-// ── Health check (for uptime pings / keep-alive) ────────────
-app.get('/health', (_req, res) => res.json({ ok: true, bot: config.runBot, ts: Date.now() }));
-
 // ── Proxy ───────────────────────────────────────────────────
 app.use('/v1', proxy);
 
-app.listen(config.port, () => {
+app.listen(config.port, '0.0.0.0', () => {
   console.log('─'.repeat(50));
-  console.log(`🛡️  Redwire gateway listening on :${config.port}`);
+  console.log(`🛡️  Gateway listening on 0.0.0.0:${config.port}`);
   console.log(`   Upstream : ${config.apiBaseUrl}`);
   console.log(`   Origins  : ${config.allowedOrigins.length ? config.allowedOrigins.join(', ') : '(any — set ALLOWED_ORIGINS!)'}`);
   console.log(`   Token    : ${config.storefrontToken ? 'required' : 'disabled'}`);

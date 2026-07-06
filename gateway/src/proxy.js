@@ -12,6 +12,9 @@ const router = Router();
 
 // Forward the current request to the real Redwire API with the key attached.
 async function forward(req, res) {
+  if (!config.apiKey) {
+    return res.status(500).json({ error: 'gateway_not_configured', message: 'REDWIRE_API_KEY is not set on the gateway.' });
+  }
   const qs = req.originalUrl.includes('?') ? '?' + req.originalUrl.split('?')[1] : '';
   const target = `${config.apiBaseUrl}${req.path}${qs}`;
 
