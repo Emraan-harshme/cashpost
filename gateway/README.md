@@ -57,7 +57,7 @@ Bot vars are only needed when `RUN_BOT=true` (see `src/bot` / the bot README).
 - In-process with the gateway: set `RUN_BOT=true` and the Discord vars, then the
   gateway boots the bot after the HTTP server. A bot misconfig will **not** take
   the gateway down (it logs and keeps serving).
-- Register slash commands once: `npm run register`.
+- Slash commands register **automatically on startup** (no manual step). Set `DISCORD_GUILD_ID` so they appear instantly.
 - Standalone (no gateway): `node src/bot/index.js`.
 
 ## Local dev

@@ -17,9 +17,12 @@ import {
   ActionRowBuilder,
   AttachmentBuilder,
   MessageFlags,
+  REST,
+  Routes,
 } from 'discord.js';
 
 import { config, assertRuntimeConfig } from './config.js';
+import { commands } from './commands.js';
 import * as api from './api.js';
 import * as store from './store.js';
 import * as ui from './ui.js';
@@ -442,13 +445,29 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.once(Events.ClientReady, (c) => {
+client.once(Events.ClientReady, async (c) => {
   console.log('─'.repeat(50));
   console.log(`🤖  ${config.operatorName} bot online as ${c.user.tag}`);
   console.log(`   Delivery mode : ${config.deliveryMode}`);
   console.log(`   Cooldown      : ${config.cooldownHours}h between tasks`);
   console.log(`   Reject limit  : ${config.rejectLimitPerDay}/day`);
   console.log(`   Operator log  : ${config.operatorLogChannelId || '(none)'}`);
+
+  // Auto-register slash commands on boot so no manual `npm run register` is
+  // needed (important on hosts like Render where you can't run a shell).
+  try {
+    const appId = c.application?.id ?? c.user.id;
+    const rest = new REST({ version: '10' }).setToken(config.token);
+    if (config.guildId) {
+      await rest.put(Routes.applicationGuildCommands(appId, config.guildId), { body: commands });
+      console.log(`   Commands      : registered ${commands.length} to guild ${config.guildId}`);
+    } else {
+      await rest.put(Routes.applicationCommands(appId), { body: commands });
+      console.log(`   Commands      : registered ${commands.length} globally (may take ~1h to appear)`);
+    }
+  } catch (e) {
+    console.error('⚠️  Slash command registration failed:', e.message);
+  }
   console.log('─'.repeat(50));
 });
 

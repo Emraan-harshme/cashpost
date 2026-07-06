@@ -69,14 +69,19 @@ If you want posters to use a Discord bot instead of (or alongside) the site, on 
 
 - `RUN_BOT` = `true`
 - `DISCORD_TOKEN` = your bot token
-- `DISCORD_CLIENT_ID` = your app's client ID
-- `DISCORD_GUILD_ID` = your server ID
+- `DISCORD_GUILD_ID` = your server ID (**recommended** — makes slash commands appear instantly)
 - `OPERATOR_LOG_CHANNEL_ID`, `STAFF_ROLE_ID` = optional
 
-Then register the bot's commands once (locally, from the `gateway` folder):
-`npm install && npm run register`
+The bot **registers its own slash commands automatically on startup** — you do
+**not** need to run anything by hand. (With `DISCORD_GUILD_ID` set they appear
+instantly; without it, global commands can take up to ~1 hour the first time.)
 
 The uptime ping from the step above also keeps the bot online.
+
+Before first launch: in the Discord Developer Portal enable the **Server Members
+Intent** (Bot tab), and invite the bot with the `bot` + `applications.commands`
+scopes and permissions: View Channels, Send Messages, Manage Channels, Embed
+Links, Read Message History.
 
 ---
 
