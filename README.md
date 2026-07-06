@@ -1,5 +1,9 @@
 # CashPost — Redwire Operator Frontend
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Emraan-harshme/cashpost)
+
+> **Quick deploy:** click the button (creates both services from `render.yaml`), or follow the step-by-step in [`DEPLOY.md`](./DEPLOY.md). Never put your Redwire key in this frontend — it goes in the gateway.
+
 Neon cyberpunk terminal aesthetic — near-black canvas, lime/cyan accents, monospace type, bottom dock navigation.
 
 This is one of five visually distinct operator storefronts. All five share the **exact same backend
