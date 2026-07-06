@@ -6,22 +6,24 @@ import ClaimView from './components/ClaimView';
 import HistoryView from './components/HistoryView';
 import EarningsView from './components/EarningsView';
 import BottomNav from './components/BottomNav';
+import Landing from './components/Landing';
 import Notification, { NotificationType } from './components/Notification';
 import { Terminal, Power } from 'lucide-react';
 
 export default function App() {
   const [username, setUsername] = useState<string | null>(null);
   const [view, setView] = useState<string>('board');
+  const [showLogin, setShowLogin] = useState(false);
   const [activeClaim, setActiveClaim] = useState<any>(null);
   const [notification, setNotification] = useState<{ msg: string; type: NotificationType } | null>(null);
 
   useEffect(() => {
     document.title = import.meta.env.VITE_OPERATOR_NAME || 'CashPost';
-    const storedUser = localStorage.getItem('redwire_username');
+    const storedUser = localStorage.getItem('cashpost_username');
     if (storedUser) {
       setUsername(storedUser);
     }
-    const storedClaim = localStorage.getItem('redwire_active_claim');
+    const storedClaim = localStorage.getItem('cashpost_active_claim');
     if (storedClaim) {
       try {
         const claim = JSON.parse(storedClaim);
@@ -29,7 +31,7 @@ export default function App() {
           setActiveClaim(claim);
           setView('claim');
         } else {
-          localStorage.removeItem('redwire_active_claim');
+          localStorage.removeItem('cashpost_active_claim');
         }
       } catch (e) {
         // ignore
@@ -38,14 +40,14 @@ export default function App() {
   }, []);
 
   const handleLogin = (user: string) => {
-    localStorage.setItem('redwire_username', user);
+    localStorage.setItem('cashpost_username', user);
     setUsername(user);
     setView(activeClaim ? 'claim' : 'board');
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('redwire_username');
-    localStorage.removeItem('redwire_active_claim');
+    localStorage.removeItem('cashpost_username');
+    localStorage.removeItem('cashpost_active_claim');
     setUsername(null);
     setActiveClaim(null);
     setView('board');
@@ -58,19 +60,31 @@ export default function App() {
 
   const handleClaimSuccess = (claimData: any) => {
     setActiveClaim(claimData);
-    localStorage.setItem('redwire_active_claim', JSON.stringify(claimData));
+    localStorage.setItem('cashpost_active_claim', JSON.stringify(claimData));
     setView('claim');
   };
 
   const handleClearClaim = () => {
     setActiveClaim(null);
-    localStorage.removeItem('redwire_active_claim');
+    localStorage.removeItem('cashpost_active_claim');
   };
 
   if (!username) {
     return (
       <>
-        <UsernameGate onLogin={handleLogin} showNotification={showNotification} />
+        {showLogin ? (
+          <>
+            <button
+              onClick={() => setShowLogin(false)}
+              className="fixed top-4 left-4 z-50 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 hover:text-lime-300 transition-colors"
+            >
+              &lt; back
+            </button>
+            <UsernameGate onLogin={handleLogin} showNotification={showNotification} />
+          </>
+        ) : (
+          <Landing onGetStarted={() => setShowLogin(true)} />
+        )}
         <AnimatePresence>
           {notification && <Notification message={notification.msg} type={notification.type} onClose={() => setNotification(null)} />}
         </AnimatePresence>
