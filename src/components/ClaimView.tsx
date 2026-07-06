@@ -125,7 +125,7 @@ export default function ClaimView({ claim, onClearClaim, showNotification, setVi
         </div>
         <div className="flex justify-between items-center px-4 py-3">
           <div>
-            <div className="font-mono text-slate-100 text-sm">r/{claim.subreddit}</div>
+            <div className="font-mono text-slate-100 text-sm">r/{claim.subreddit.replace(/^r\//i, '')}</div>
             <div className="font-mono text-lime-300 text-sm">T-MINUS {timeLeft}</div>
           </div>
           <div className="text-2xl font-mono font-bold text-lime-300">${Number(claim.payout).toFixed(2)}</div>

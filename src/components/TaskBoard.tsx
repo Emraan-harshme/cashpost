@@ -59,6 +59,15 @@ export default function TaskBoard({ username, onClaimSuccess, showNotification }
         targetPostUrl: (campaign as any)?.targetPostUrl ?? null,
       };
 
+      if (String(enrichedClaim.interaction_type || '').toLowerCase().includes('comment') && (campaign as any)?.post_content?.prewrittenComments?.length) {
+        const cmts = (campaign as any).post_content.prewrittenComments as string[];
+        enrichedClaim.post_content = {
+          ...((campaign as any)?.post_content || {}),
+          title: 'Pick ONE comment to post',
+          body: cmts.map((c, i) => `${i + 1}. ${c}`).join('\n\n'),
+        } as any;
+      }
+
       onClaimSuccess(enrichedClaim);
     } catch (err: any) {
       if (err.data?.error === 'no_slots_available') {
@@ -103,7 +112,7 @@ export default function TaskBoard({ username, onClaimSuccess, showNotification }
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="font-bold text-slate-100 text-lg">
-                  {camp.subreddits.length === 1 ? `r/${camp.subreddits[0]}` : `${camp.subreddits.length} targets`}
+                  {camp.subreddits.length === 1 ? `r/${camp.subreddits[0].replace(/^r\//i, '')}` : `${camp.subreddits.length} targets`}
                 </h3>
                 <div className="flex gap-2 mt-2">
                   <span className="px-2 py-0.5 bg-black border border-cyan-500/30 text-[9px] font-bold uppercase text-cyan-300 tracking-widest">{camp.tier}</span>
@@ -146,7 +155,7 @@ export default function TaskBoard({ username, onClaimSuccess, showNotification }
                     disabled={claimingId !== null}
                     className="bg-black border border-slate-700 hover:border-lime-400/60 p-2 text-left text-xs font-bold text-slate-200 flex justify-between items-center transition-colors"
                   >
-                    <span>r/{sub}</span>
+                    <span>r/{sub.replace(/^r\//i, '')}</span>
                     {claimingId === `${camp.id}-${sub}` && <div className="animate-spin border-lime-400 border-t-transparent rounded-full w-3 h-3 border-2" />}
                   </button>
                 ))}
