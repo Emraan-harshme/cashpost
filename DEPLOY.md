@@ -64,6 +64,8 @@ Add a free uptime ping so it stays warm:
 
 ## Optional — run the Discord bot too
 
+> Full walkthrough (get token, IDs, invite link): see [`gateway/DISCORD_SETUP.md`](./gateway/DISCORD_SETUP.md).
+
 If you want posters to use a Discord bot instead of (or alongside) the site, on the
 **Gateway** service set these env vars and redeploy:
 
