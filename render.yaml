@@ -1,0 +1,19 @@
+# Render blueprint for the CashPost storefront (static frontend).
+# It holds NO secrets — it only needs your gateway URL.
+services:
+  - type: web
+    name: cashpost-storefront
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_GATEWAY_URL
+        sync: false          # https://your-gateway.onrender.com/v1
+      - key: VITE_STOREFRONT_TOKEN
+        sync: false          # optional, must match the gateway
+      - key: VITE_OPERATOR_NAME
+        value: CashPost

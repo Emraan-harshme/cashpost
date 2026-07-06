@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #c6f24e;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html, body {
+  background-color: #05070a;
+  color: #9fb2c0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, "JetBrains Mono", monospace;
+}
+
+.cp-grid {
+  background-image:
+    linear-gradient(rgba(198, 242, 78, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.cp-glow {
+  box-shadow: 0 0 0 1px rgba(198, 242, 78, 0.25), 0 0 24px -6px rgba(198, 242, 78, 0.35);
+}

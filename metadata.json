@@ -1,0 +1,5 @@
+{
+  "name": "CashPost",
+  "description": "Operator frontend for the Redwire poster network.",
+  "requestFramePermissions": []
+}
