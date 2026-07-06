@@ -1,6 +1,37 @@
-# Render blueprint for the CashPost storefront (static frontend).
-# It holds NO secrets — it only needs your gateway URL.
+# One-click Render Blueprint: creates BOTH services for this storefront.
+# 1) cashpost-gateway  (backend, holds your secret Redwire key)
+# 2) cashpost-storefront (static frontend, no secrets)
 services:
+  - type: web
+    name: cashpost-gateway
+    runtime: node
+    rootDir: gateway
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: REDWIRE_API_KEY
+        sync: false          # <-- your SECRET operator key
+      - key: ALLOWED_ORIGINS
+        sync: false          # <-- your storefront URL (set after first deploy)
+      - key: RUN_BOT
+        value: "false"       # set "true" to also run the Discord bot here
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_GUILD_ID
+        sync: false
+      - key: OPERATOR_NAME
+        value: CashPost
+      - key: DELIVERY_MODE
+        value: ticket
+      - key: OPERATOR_LOG_CHANNEL_ID
+        sync: false
+      - key: STAFF_ROLE_ID
+        sync: false
+
   - type: web
     name: cashpost-storefront
     runtime: static
@@ -12,8 +43,6 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_GATEWAY_URL
-        sync: false          # https://your-gateway.onrender.com/v1
-      - key: VITE_STOREFRONT_TOKEN
-        sync: false          # optional, must match the gateway
+        sync: false          # <-- https://cashpost-gateway.onrender.com/v1
       - key: VITE_OPERATOR_NAME
         value: CashPost

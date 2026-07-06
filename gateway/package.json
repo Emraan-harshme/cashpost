@@ -1,0 +1,19 @@
+{
+  "name": "redwire-operator-gateway",
+  "version": "1.0.0",
+  "description": "Operator backend gateway: holds the Redwire API key server-side, proxies poster-safe endpoints for the static storefront, and can optionally run the Discord bot in the same process.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "register": "node src/bot/register.js",
+    "check": "node --check src/server.js && node --check src/config.js && node --check src/proxy.js && node --check src/bot/index.js && echo 'syntax ok'"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.4.1"
+  }
+}

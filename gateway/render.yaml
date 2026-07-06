@@ -1,0 +1,47 @@
+# Render blueprint for the operator gateway (backend).
+# Holds your secret Redwire API key and (optionally) runs the Discord bot.
+# Deploy: New + > Blueprint > point at this repo.
+services:
+  - type: web
+    name: redwire-operator-gateway
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: REDWIRE_API_BASE_URL
+        value: https://api.redwire.work/v1
+      - key: REDWIRE_API_KEY
+        sync: false            # set in the dashboard — this is your SECRET key
+      - key: ALLOWED_ORIGINS
+        sync: false            # e.g. https://your-store.onrender.com
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: RATE_LIMIT_MAX
+        value: "60"
+      - key: STOREFRONT_TOKEN
+        sync: false            # optional
+      - key: RUN_BOT
+        value: "false"         # set true to also run the Discord bot here
+      # If RUN_BOT=true, also set these (sync:false) in the dashboard:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        sync: false
+      - key: DISCORD_GUILD_ID
+        sync: false
+      - key: OPERATOR_NAME
+        value: Redwire
+      - key: DELIVERY_MODE
+        value: ticket
+      - key: TASK_COOLDOWN_HOURS
+        value: "6"
+      - key: REJECT_LIMIT_PER_DAY
+        value: "3"
+      - key: OPERATOR_LOG_CHANNEL_ID
+        sync: false
+      - key: STAFF_ROLE_ID
+        sync: false
+      - key: TICKET_CATEGORY_ID
+        sync: false
