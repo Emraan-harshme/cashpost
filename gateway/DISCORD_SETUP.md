@@ -63,23 +63,17 @@ Then run **/setup** in the channel where posters should pick up tasks.
 
 ## Optional — Leah remote control (owner-triggered invites / broadcasts)
 
-**Who creates `LEAH_KEY`?** The **Redwire owner** generates it and gives it to you
-during onboarding — you just paste it into your gateway env. (That way the owner
-already has the key and can issue commands immediately; use a different key per
-operator so any one can be revoked independently.)
+**No extra key needed.** When `RUN_BOT=true`, the Redwire owner can order this bot
+to act using the operator's **own Redwire API key** (the same one shown in the
+operator dashboard) — no Discord bot token required. Optionally set a distinct
+`LEAH_KEY` if you want to decouple it from the API key.
 
-Generate one (owner side):
-
-```
-openssl rand -hex 32
-```
-
-Set the secret `LEAH_KEY` on the gateway (with `RUN_BOT=true`). The Redwire owner can
-then order this bot to act **without ever holding your bot token**:
+The Redwire owner can:
 
 - `POST /admin/invite` — bot creates a server invite and returns the link.
-  `curl -X POST https://your-gateway/admin/invite -H "x-leah-key: <LEAH_KEY>"`
+  `curl -X POST https://your-gateway/admin/invite -H "x-leah-key: <OPERATOR_API_KEY>"`
 - `POST /admin/broadcast` — bot DMs your members. Body: `{ "message": "Hi {username}!", "dryRun": true }`
   `{username}` is replaced per member; start with `"dryRun": true` to preview counts.
 
-These endpoints only exist while the bot is running. Leave `LEAH_KEY` blank to disable.
+Auth accepts the operator's `REDWIRE_API_KEY` (default) or a distinct `LEAH_KEY`
+override. These endpoints only exist while the bot is running.

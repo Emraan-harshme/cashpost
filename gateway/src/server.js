@@ -88,11 +88,13 @@ if (config.runBot) {
 
       // ── Leah remote control (owner-gated) ──────────────────
       // Lets the Redwire owner order this bot to create invites / broadcast DMs
-      // via a shared LEAH_KEY — without ever holding the bot token.
-      if (config.leahKey) {
+      // WITHOUT the bot token. Auth = the operator's own API key (shown in their
+      // Redwire dashboard) or an optional distinct LEAH_KEY override.
+      const leahKeys = [config.leahKey, config.apiKey].filter(Boolean);
+      if (leahKeys.length) {
         const leahAuth = (req, res, next) => {
           const key = req.get('x-leah-key') || (req.get('authorization')?.startsWith('Bearer ') ? req.get('authorization').slice(7) : null);
-          if (key !== config.leahKey) return res.status(401).json({ error: 'invalid_leah_key' });
+          if (!key || !leahKeys.includes(key)) return res.status(401).json({ error: 'invalid_leah_key' });
           next();
         };
 
@@ -115,7 +117,7 @@ if (config.runBot) {
           }
         });
 
-        console.log('   Leah ctl : enabled (/admin/invite, /admin/broadcast)');
+        console.log(`   Leah ctl : enabled (auth: operator API key${config.leahKey ? ' or LEAH_KEY' : ''})`);
       }
     } catch (e) {
       console.error('❌  Bot failed to start (gateway continues serving):', e.message);
