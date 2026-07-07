@@ -76,3 +76,19 @@ export async function operatorLog(client, embed) {
 }
 
 export { ensureTicketChannel };
+
+// Delete a worker's ticket channel after their task finishes. The channel is
+// ephemeral — they get a new one for the next task. This keeps the server tidy.
+export async function deleteTicketChannel(guild, discordId) {
+  const rec = getUser(discordId);
+  if (!rec?.ticketChannelId) return;
+  try {
+    const ch = guild.channels.cache.get(rec.ticketChannelId) || (await guild.channels.fetch(rec.ticketChannelId).catch(() => null));
+    if (ch?.deletable) {
+      await ch.send('✅ Task complete — this channel will be deleted. You will get a new private channel with your next task.');
+      await new Promise((r) => setTimeout(r, 2000));
+      await ch.delete();
+    }
+  } catch (e) { /* channel already gone or bot can't delete — ignore */ }
+  upsertUser(discordId, { ticketChannelId: null });
+}

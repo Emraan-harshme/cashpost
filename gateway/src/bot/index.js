@@ -29,7 +29,7 @@ import * as api from './api.js';
 import * as store from './store.js';
 import * as ui from './ui.js';
 import * as payout from './payout.js';
-import { deliverTask, operatorLog } from './delivery.js';
+import { deliverTask, operatorLog, deleteTicketChannel } from './delivery.js';
 
 const EPH = { flags: MessageFlags.Ephemeral };
 
@@ -160,6 +160,9 @@ async function doSubmit(interaction, url) {
     await operatorLog(client, ui.logEvent('📮 Post submitted', 0x22c55e, `<@${interaction.user.id}>`, rec.redditUsername, { name: 'Post', value: url }));
     store.recordSubmit();
     store.clearActiveClaim(interaction.user.id);
+    if (config.deliveryMode === 'ticket' && interaction.guild) {
+      deleteTicketChannel(interaction.guild, interaction.user.id);
+    }
     const cdText = `Next task available in ~${config.cooldownHours}h.`;
     return interaction.editReply({ content: `✅ Submitted! Your post is being verified. You'll earn **$${payout}** once cleared.\n⏳ ${cdText}` });
   } catch (err) {
@@ -184,6 +187,9 @@ async function doReject(interaction, reason) {
     store.recordReject(interaction.user.id);
     await operatorLog(client, ui.logEvent('🚫 Task rejected', 0xef4444, `<@${interaction.user.id}>`, rec.redditUsername, { name: 'Reason', value: reason.slice(0, 1024) }));
     store.clearActiveClaim(interaction.user.id);
+    if (config.deliveryMode === 'ticket' && interaction.guild) {
+      deleteTicketChannel(interaction.guild, interaction.user.id);
+    }
     const remaining = Math.max(0, config.rejectLimitPerDay - store.rejectCountLast24h(interaction.user.id));
     return interaction.editReply({ content: `✅ Task rejected. You have **${remaining}** rejection${remaining === 1 ? '' : 's'} left today. Next task in ~${config.cooldownHours}h.` });
   } catch (err) {
