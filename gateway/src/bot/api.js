@@ -38,8 +38,11 @@ export async function apiFetch(path, options = {}) {
 export const verifyAccount = (username) =>
   apiFetch('/accounts/verify', { method: 'POST', body: JSON.stringify({ username }) });
 
-export const getCampaigns = async () => {
-  const data = await apiFetch('/campaigns');
+export const getCampaigns = async (username) => {
+  const params = new URLSearchParams();
+  if (username) params.set('username', username);
+  const qs = params.toString();
+  const data = await apiFetch(`/campaigns${qs ? `?${qs}` : ''}`);
   return Array.isArray(data) ? data : data.campaigns || [];
 };
 

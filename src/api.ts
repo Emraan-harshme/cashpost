@@ -1,7 +1,10 @@
 // Talks ONLY to the operator's own gateway (VITE_GATEWAY_URL).
 // The secret API key lives in the gateway, never in this bundle.
+// If VITE_GATEWAY_URL is not set (e.g. operator forgot), calls fail loudly.
 export const apiFetch = async (path: string, options?: RequestInit) => {
-  const baseUrl = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:8080/v1';
+  const baseUrl = import.meta.env.VITE_GATEWAY_URL;
+  if (!baseUrl) throw new Error('VITE_GATEWAY_URL is not configured — set it in your Render env.');
+
   const storefrontToken = import.meta.env.VITE_STOREFRONT_TOKEN;
 
   const response = await fetch(`${baseUrl}${path}`, {

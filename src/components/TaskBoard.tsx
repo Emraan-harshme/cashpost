@@ -22,7 +22,7 @@ export default function TaskBoard({ username, onClaimSuccess, showNotification }
 
   const fetchCampaigns = async () => {
     try {
-      const data = await apiFetch('/campaigns');
+      const data = await apiFetch('/campaigns?username=' + encodeURIComponent(username));
       setCampaigns(Array.isArray(data) ? data : data.campaigns || []);
     } catch (err) {
       showNotification('Contract feed unreachable', 'error');

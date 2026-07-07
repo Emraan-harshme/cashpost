@@ -39,7 +39,7 @@ export default function UsernameGate({ onLogin, showNotification }: UsernameGate
     } catch (err: any) {
       const error = err.data?.error || err.data?.message || '';
       if (err.status === 409 || error.includes('already_registered')) {
-        setErrorMsg('This username is registered with another operator.');
+        setErrorMsg('This account is already linked. If this is your account, contact your operator.');
       } else if (err.status === 404 || error === 'reddit_account_not_found') {
         setErrorMsg('Reddit account not found. Please check your spelling.');
       } else if (error === 'not_eligible') {

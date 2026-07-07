@@ -49,7 +49,7 @@ function claimIsLive(claim) {
 // Pick and claim exactly one task of the requested type for this worker.
 // Reuses the website's claim error handling (no_slots_available → try next).
 async function claimOneTask(redditUsername, type) {
-  const campaigns = await api.getCampaigns();
+  const campaigns = await api.getCampaigns(redditUsername);
   const open = campaigns.filter(
     (c) => (c.available_slots ?? 0) > 0 && c.subreddits?.length && api.campaignType(c) === type
   );
@@ -372,7 +372,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const rec = store.getUser(interaction.user.id);
         if (!rec?.redditUsername) return interaction.editReply({ embeds: [ui.needVerifyEmbed()] });
         try {
-          const { submissions } = await api.getSubmissions();
+          const { submissions } = await api.getSubmissions(rec.redditUsername);
           return interaction.editReply({ embeds: [ui.historyEmbed(submissions)] });
         } catch {
           return interaction.editReply({ content: '❌ Failed to load history.' });
