@@ -79,7 +79,7 @@ app.listen(config.port, '0.0.0.0', () => {
 
 // ── Optionally run the Discord bot in the same process ──────
 if (config.runBot) {
-  if (!process.env.DISCORD_TOKEN) {
+  if (!process.env.DISCORD_TOKEN || process.env.DISCORD_TOKEN.trim() === '') {
     console.warn('⚠️  RUN_BOT=true but DISCORD_TOKEN is missing — skipping bot. Gateway stays up.');
   } else {
     try {

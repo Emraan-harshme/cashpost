@@ -552,7 +552,11 @@ export async function broadcastDMs({ message, guildId, batchSize = 10, delayMs =
 export async function startBot() {
   if (!config.token) throw new Error('DISCORD_TOKEN missing — cannot start bot.');
   if (!['dm', 'ticket'].includes(config.deliveryMode)) throw new Error("DELIVERY_MODE must be 'dm' or 'ticket'.");
-  await client.login(config.token);
+  // Discord login can hang forever on dead tokens — timeout it.
+  await Promise.race([
+    client.login(config.token),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Bot login timed out after 20s — token may be invalid')), 20_000)),
+  ]);
   return client;
 }
 
