@@ -71,6 +71,10 @@ export default function TaskBoard({ username, onClaimSuccess, showNotification }
         } as any;
       }
 
+      if (enrichedClaim.post_content && /quick launch/i.test(String((enrichedClaim.post_content as any)?.note || ''))) {
+        enrichedClaim.post_content = { ...(enrichedClaim.post_content as any), note: '' } as any;
+      }
+
       onClaimSuccess(enrichedClaim);
     } catch (err: any) {
       if (err.data?.error === 'no_slots_available') {

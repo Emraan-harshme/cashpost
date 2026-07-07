@@ -95,7 +95,11 @@ export function taskEmbed(claim, workerTag) {
   }
 
   if (pc.note || claim.note_to_poster) {
-    e.addFields({ name: '📌 Instructions', value: String(pc.note || claim.note_to_poster).slice(0, 1024) });
+    const note = String(pc.note || claim.note_to_poster);
+    // "Quick Launch" campaigns carry a placeholder note, not real instructions.
+    if (!/quick launch/i.test(note)) {
+      e.addFields({ name: '📌 Instructions', value: note.slice(0, 1024) });
+    }
   }
 
   const reqs = [];
