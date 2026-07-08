@@ -1,4 +1,7 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
+import { signInWithDiscord } from '../discord';
+import { establishSession, checkServerMembership } from '../api';
 import { Terminal, Zap, ShieldCheck, Wallet, ChevronRight } from 'lucide-react';
 
 interface LandingProps {
@@ -6,6 +9,21 @@ interface LandingProps {
 }
 
 export default function Landing({ onGetStarted }: LandingProps) {
+  const [discordBusy, setDiscordBusy] = useState(false);
+
+  const handleDiscord = async () => {
+    setDiscordBusy(true);
+    try {
+      const du = await signInWithDiscord();
+      if (du?.discordId) {
+        await establishSession(du.discordId, du.discordAccessToken, '');
+        await checkServerMembership();
+      }
+    } catch {}
+    setDiscordBusy(false);
+    onGetStarted();
+  };
+
   const brand = import.meta.env.VITE_OPERATOR_NAME || 'CashPost';
   return (
     <div className="min-h-screen cp-grid text-slate-300">
@@ -88,7 +106,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
         </section>
       </main>
 
-      {window.location.search.includes('task=') && (
+      {window.location.search.includes('share=') && (
         <div className="max-w-lg mx-auto mt-4 px-4">
           <div className="bg-blue-600/10 border border-blue-400/30 rounded-xl px-4 py-3 text-center">
             <span className="text-sm font-bold text-blue-400">📨 You've been invited to a task!</span>
