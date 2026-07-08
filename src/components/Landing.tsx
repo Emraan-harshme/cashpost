@@ -88,6 +88,14 @@ export default function Landing({ onGetStarted }: LandingProps) {
         </section>
       </main>
 
+      {window.location.search.includes('task=') && (
+        <div className="max-w-lg mx-auto mt-4 px-4">
+          <div className="bg-blue-600/10 border border-blue-400/30 rounded-xl px-4 py-3 text-center">
+            <span className="text-sm font-bold text-blue-400">📨 You've been invited to a task!</span>
+            <p className="text-xs text-blue-300/70 mt-1">Sign in to claim it — we'll route you straight there.</p>
+          </div>
+        </div>
+      )}
       <footer className="border-t border-slate-800 py-6 text-center text-slate-600 text-[10px] font-mono tracking-widest uppercase">
         {brand} · the poster network
       </footer>

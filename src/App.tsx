@@ -19,10 +19,26 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [discordPromptDismissed, setDiscordPromptDismissed] = useState(false);
   const [discordLinking, setDiscordLinking] = useState(false);
+  const [sharedTask, setSharedTask] = useState<{campaignId:string,subreddit:string}|null>(null);
   const [activeClaim, setActiveClaim] = useState<any>(null);
   const [notification, setNotification] = useState<{ msg: string; type: NotificationType } | null>(null);
 
   useEffect(() => {
+    // Shared task: read ?task=...&sub=... from URL, store for auto-claim after login.
+    const params = new URLSearchParams(window.location.search);
+    const taskId = params.get('task');
+    const taskSub = params.get('sub');
+    if (taskId && taskSub) {
+      localStorage.setItem('cashpost_shared_task', JSON.stringify({ campaignId: taskId, subreddit: taskSub }));
+      setSharedTask({ campaignId: taskId, subreddit: taskSub });
+      // Clean the URL so the banner doesn't persist on refresh.
+      window.history.replaceState({}, '', window.location.pathname);
+    } else {
+      const stored = localStorage.getItem('cashpost_shared_task');
+      if (stored) {
+        try { setSharedTask(JSON.parse(stored)); } catch {}
+      }
+    }
     document.title = import.meta.env.VITE_OPERATOR_NAME || 'CashPost';
     const storedUser = localStorage.getItem('cashpost_username');
     if (storedUser) {
@@ -48,6 +64,30 @@ export default function App() {
     localStorage.setItem('cashpost_username', user);
     setUsername(user);
     setView(activeClaim ? 'claim' : 'board');
+    // If a shared task is pending, auto-claim it now.
+    const st = localStorage.getItem('cashpost_shared_task');
+    if (st) {
+      try {
+        const { campaignId, subreddit } = JSON.parse(st);
+        localStorage.removeItem('cashpost_shared_task');
+        apiFetch('/claim', { method: 'POST', body: JSON.stringify({ campaign_id: campaignId, username: user, subreddit }) }).then(claimed => {
+          const campEnriched = {
+            claim_id: claimed.claim_id,
+            expires_at: claimed.expires_at,
+            expiresAt: new Date(claimed.expires_at).getTime(),
+            campaign_id: campaignId,
+            subreddit,
+            payout: 0,
+            post_content: null,
+            tier: null,
+            interaction_type: 'post',
+          };
+          localStorage.setItem('cashpost_active_claim', JSON.stringify(campEnriched));
+          setActiveClaim(campEnriched);
+          setView('claim');
+        }).catch(() => setView('board'));
+      } catch { setView('board'); }
+    }
   };
 
   const handleLogout = () => {

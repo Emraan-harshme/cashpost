@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { Share2, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { apiFetch } from '../api';
 import { Campaign } from '../types';
