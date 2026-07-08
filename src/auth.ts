@@ -31,7 +31,6 @@ function loadGis(): Promise<void> {
   return gisPromise;
 }
 
-// Triggers Google's popup from a user click and resolves the profile.
 export async function signInWithGoogle(): Promise<GoogleUser> {
   if (!googleClientId) throw new Error('google_disabled');
   await loadGis();
@@ -48,7 +47,7 @@ export async function signInWithGoogle(): Promise<GoogleUser> {
           });
           const u = await r.json();
           const user: GoogleUser = { sub: u.sub, email: u.email, name: u.name, picture: u.picture };
-          localStorage.setItem('cashpost_google_user', JSON.stringify(user));
+          localStorage.setItem('google_user', JSON.stringify(user));
           resolve(user);
         } catch (e) {
           reject(e as Error);
@@ -61,7 +60,7 @@ export async function signInWithGoogle(): Promise<GoogleUser> {
 
 export function getGoogleUser(): GoogleUser | null {
   try {
-    const raw = localStorage.getItem('cashpost_google_user');
+    const raw = localStorage.getItem('google_user');
     return raw ? (JSON.parse(raw) as GoogleUser) : null;
   } catch {
     return null;
