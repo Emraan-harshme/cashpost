@@ -45,6 +45,18 @@ export const commands = [
     .setDescription('(Operator) View worker + task activity stats')
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
 
+  new SlashCommandBuilder()
+    .setName('ban')
+    .setDescription('(Operator) Suspend a poster')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addUserOption((o) => o.setName('user').setDescription('The poster to suspend').setRequired(true)),
+
+  new SlashCommandBuilder()
+    .setName('unban')
+    .setDescription('(Operator) Unsuspend a poster')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addUserOption((o) => o.setName('user').setDescription('The poster to unsuspend').setRequired(true)),
+
   // Operator-only: payout report (who is owed how much + their wallet) as CSV.
   new SlashCommandBuilder()
     .setName('report')

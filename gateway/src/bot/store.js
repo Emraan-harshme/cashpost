@@ -60,11 +60,15 @@ export function clearUser(discordId) {
 }
 
 export function setActiveClaim(discordId, claim) {
-  upsertUser(discordId, { activeClaim: claim, lastTaskAt: Date.now() });
+  upsertUser(discordId, { activeClaim: claim });
   state.stats.claimed += 1;
   const t = claim?.interaction_type === 'comment' ? 'comment' : 'post';
   state.stats.byType[t] = (state.stats.byType[t] || 0) + 1;
   save();
+}
+
+export function setLastTaskAt(discordId) {
+  upsertUser(discordId, { lastTaskAt: Date.now() });
 }
 
 export function clearActiveClaim(discordId) {

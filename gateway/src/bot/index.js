@@ -185,6 +185,7 @@ async function doSubmit(interaction, url) {
     const payout = Number(rec.activeClaim.payout).toFixed(2);
     await operatorLog(client, ui.logEvent('📮 Post submitted', 0x22c55e, `<@${interaction.user.id}>`, rec.redditUsername, { name: 'Post', value: url }));
     store.recordSubmit();
+    store.setLastTaskAt(interaction.user.id);
     store.clearActiveClaim(interaction.user.id);
     if (config.deliveryMode === 'ticket' && interaction.guild) {
       deleteTicketChannel(interaction.guild, interaction.user.id);
@@ -367,6 +368,24 @@ client.on(Events.InteractionCreate, async (interaction) => {
         await interaction.reply({ embeds: [ui.configStatusEmbed(interaction.guild)], ...EPH });
         return interaction.channel.send({ embeds: [ui.panelEmbed()], components: [ui.panelButtons()] });
       }
+      if (name === 'ban') {
+        const target = interaction.options.getUser('user');
+        const rec = store.getUser(target.id);
+        if (!rec?.redditUsername) return interaction.reply({ content: '❌ That user is not verified with a Reddit account.', ...EPH });
+        try {
+          await api.suspendPoster(rec.redditUsername);
+          return interaction.reply({ content: `🚫 u/${rec.redditUsername} has been suspended.`, ...EPH });
+        } catch { return interaction.reply({ content: '❌ Failed to suspend.', ...EPH }); }
+      }
+      if (name === 'unban') {
+        const target = interaction.options.getUser('user');
+        const rec = store.getUser(target.id);
+        if (!rec?.redditUsername) return interaction.reply({ content: '❌ That user is not verified.', ...EPH });
+        try {
+          await api.unsuspendPoster(rec.redditUsername);
+          return interaction.reply({ content: `✅ u/${rec.redditUsername} has been unsuspended.`, ...EPH });
+        } catch { return interaction.reply({ content: '❌ Failed to unsuspend.', ...EPH }); }
+      }
       if (name === 'stats') {
         return interaction.reply({ embeds: [ui.statsEmbed(store.getStats())], ...EPH });
       }
@@ -523,6 +542,14 @@ client.once(Events.ClientReady, async (c) => {
     console.error('⚠️  Slash command registration failed:', e.message);
   }
   initDeliveryClient(c);
+
+  // Pull operator-level config (cooldown, markup) from the API so the bot
+  // stays synced with dashboard changes. Falls back to env defaults.
+  try {
+    const opCfg = await api.getOperatorConfig();
+    config.cooldownHours = opCfg.cooldownHours ?? config.cooldownHours;
+    console.log(`   Op config    : cooldown ${config.cooldownHours}h, markup ${opCfg.markupPercent ?? 0}%`);
+  } catch { /* API unreachable — keep env defaults */ }
   console.log('─'.repeat(50));
 });
 

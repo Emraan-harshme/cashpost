@@ -46,6 +46,15 @@ export const verifyAccount = (username, discordId) =>
 export const getMe = (discordId) =>
   apiFetch('/me', { headers: discordId ? { 'x-discord-id': discordId } : {} });
 
+// Operator config — cooldown, markup.
+export const getOperatorConfig = () => apiFetch('/operator/config');
+
+// Suspend / unsuspend a poster.
+export const suspendPoster = (username) =>
+  apiFetch(`/accounts/${encodeURIComponent(username)}/suspend`, { method: 'POST' });
+export const unsuspendPoster = (username) =>
+  apiFetch(`/accounts/${encodeURIComponent(username)}/unsuspend`, { method: 'POST' });
+
 export const getCampaigns = async (username) => {
   const params = new URLSearchParams();
   if (username) params.set('username', username);

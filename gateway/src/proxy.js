@@ -56,5 +56,8 @@ router.post('/release', forward);
 router.get('/submissions', forward);
 router.get('/balance', forward);
 router.get('/tasks/stats', forward);
+router.get('/operator/config', forward);
+router.post('/accounts/:username/suspend', forward);
+router.post('/accounts/:username/unsuspend', forward);
 
 export default router;
