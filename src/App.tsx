@@ -6,6 +6,8 @@ import TaskBoard from './components/TaskBoard';
 import ClaimView from './components/ClaimView';
 import HistoryView from './components/HistoryView';
 import EarningsView from './components/EarningsView';
+import { discordEnabled, signInWithDiscord, getDiscordUser } from './discord';
+import { establishSession, checkServerMembership } from './api';
 import BottomNav from './components/BottomNav';
 import Landing from './components/Landing';
 import Notification, { NotificationType } from './components/Notification';
@@ -15,6 +17,8 @@ export default function App() {
   const [username, setUsername] = useState<string | null>(null);
   const [view, setView] = useState<string>('board');
   const [showLogin, setShowLogin] = useState(false);
+  const [discordPromptDismissed, setDiscordPromptDismissed] = useState(false);
+  const [discordLinking, setDiscordLinking] = useState(false);
   const [activeClaim, setActiveClaim] = useState<any>(null);
   const [notification, setNotification] = useState<{ msg: string; type: NotificationType } | null>(null);
 
