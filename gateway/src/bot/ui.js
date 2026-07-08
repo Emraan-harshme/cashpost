@@ -174,8 +174,10 @@ export function cooldownEmbed(remainingMs) {
 
 export function needVerifyEmbed() {
   const e = new EmbedBuilder()
-    .setTitle('🔓 Verify first')
-    .setDescription('You need to verify your Reddit account before picking up tasks.\nUse **/verify** to get started.');
+    .setTitle('🔓 Session refresh needed')
+    .setDescription(
+      'Run **/verify** `your-reddit-username` to reconnect — your account is still registered and your earnings are safe. This just restores your session after a bot restart.'
+    );
   return brandFooter(e);
 }
 

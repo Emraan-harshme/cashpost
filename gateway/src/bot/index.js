@@ -57,8 +57,7 @@ async function claimOneTask(redditUsername, type) {
 
   // Anti-gaming: track recent tasks by tier per poster so a tier3 user
   // can't exclusively claim tier3 campaigns (starving lower tiers).
-  const rec = store.getUser ? null : null; // poster stats live in store
-  const recentTiers = store.getPosterTierHistory ? store.getPosterTierHistory(redditUsername) : [];
+  const recentTiers = (store.getPosterTierHistory || (() => []))(redditUsername);
 
   // Smart scoring: favour higher-tier campaigns but penalise over-used tiers.
   const scored = open.map((c) => {
