@@ -237,7 +237,7 @@ export default function ClaimView({ claim, onClearClaim, showNotification, setVi
 
           <div className="grid grid-cols-2 gap-3 pt-4 mt-4 border-t border-slate-800">
             <button onClick={() => setShowRejectModal(true)} className="py-2 px-3 text-xs font-bold border border-red-500/40 text-red-400 hover:bg-red-950/30 uppercase tracking-widest transition-colors">Abort</button>
-            <button onClick={() => window.open(claim.targetPostUrl || `https://www.reddit.com/r/${claim.subreddit.replace('r/', '')}/`, 'RedditPost', 'width=850,height=700')} className="py-2 px-3 text-xs bg-cyan-500 hover:bg-cyan-400 text-black font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">Open Reddit</button>
+            <button onClick={() => window.open(claim.targetPostUrl || `https://www.reddit.com/r/${claim.subreddit.replace('r/', '')}/`, 'RedditPost', 'width=850,height=700')} className="py-2 px-3 text-xs bg-cyan-500 hover:bg-cyan-400 text-black font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">{claim.interaction_type === 'comment' ? 'Open Thread' : `Post to r/${claim.subreddit.replace(/^r\//i, '')}`}</button>
           </div>
         </section>
       </div>
