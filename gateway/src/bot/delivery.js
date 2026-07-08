@@ -75,7 +75,40 @@ export async function operatorLog(client, embed) {
   }
 }
 
-export { ensureTicketChannel };
+
+// ── Discord auth helpers (called by gateway routes) ──────────
+
+let _client = null;
+export function initDeliveryClient(c) { _client = c; }
+
+// Check if a Discord user is in the operator's server.
+export function checkServerMembership(discordId) {
+  try {
+    const guild = _client?.guilds?.cache?.get(config.guildId);
+    return guild ? guild.members.cache.has(discordId) : false;
+  } catch { return false; }
+}
+
+// Send a welcome DM to a newly-joined user.
+export async function sendOnboardingDM(discordId) {
+  try {
+    const guild = _client?.guilds?.cache?.get(config.guildId);
+    if (!guild) return;
+    const member = await guild.members.fetch(discordId).catch(() => null);
+    if (!member) return;
+    await member.send(
+      `👋 Welcome to **${config.operatorName}**!\n\n` +
+        'To start earning, verify your Reddit account: `/verify your-username`\n' +
+        'Then grab a task with `/gettask`.'
+    ).catch(() => {});
+  } catch { /* DMs may be disabled */ }
+}
+
+// Bot invite URL for the operator's server.
+export function getInviteUrl() {
+  if (!config.clientId) return null;
+  return `https://discord.com/api/oauth2/authorize?client_id=${config.clientId}&permissions=11264&scope=bot%20applications.commands`;
+}
 
 // Delete a worker's ticket channel after their task finishes. The channel is
 // ephemeral — they get a new one for the next task. This keeps the server tidy.

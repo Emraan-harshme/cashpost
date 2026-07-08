@@ -29,7 +29,7 @@ import * as api from './api.js';
 import * as store from './store.js';
 import * as ui from './ui.js';
 import * as payout from './payout.js';
-import { deliverTask, operatorLog, deleteTicketChannel } from './delivery.js';
+import { deliverTask, operatorLog, deleteTicketChannel, initDeliveryClient } from './delivery.js';
 
 const EPH = { flags: MessageFlags.Ephemeral };
 
@@ -53,17 +53,44 @@ async function claimOneTask(redditUsername, type) {
   const open = campaigns.filter(
     (c) => (c.available_slots ?? 0) > 0 && c.subreddits?.length && api.campaignType(c) === type
   );
-  for (const campaign of open) {
+  if (!open.length) return null;
+
+  // Anti-gaming: track recent tasks by tier per poster so a tier3 user
+  // can't exclusively claim tier3 campaigns (starving lower tiers).
+  const rec = store.getUser ? null : null; // poster stats live in store
+  const recentTiers = store.getPosterTierHistory ? store.getPosterTierHistory(redditUsername) : [];
+
+  // Smart scoring: favour higher-tier campaigns but penalise over-used tiers.
+  const scored = open.map((c) => {
+    const tier = String(c.tier || 'tier1');
+    const tierScore = tier === 'tier3' ? 300 : tier === 'tier2' ? 200 : 100;
+    const featureBoost = c.featured ? 500 : 0;
+    const ageHours = c.createdAt ? (Date.now() - new Date(c.createdAt?._seconds ? c.createdAt._seconds * 1000 : c.createdAt).getTime()) / 3600000 : 0;
+    const ageScore = Math.min(ageHours * 10, 200);
+
+    // Anti-gaming penalty: if poster has done 3+ tasks at this tier recently, penalise heavily.
+    const recentSameTier = recentTiers.filter((t) => t === tier).length;
+    const penalty = Math.max(0, recentSameTier - 2) * 120;
+
+    return { campaign: c, score: tierScore + featureBoost + ageScore - penalty };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+
+  for (const { campaign } of scored) {
     const subreddit = campaign.subreddits[0];
     try {
       const res = await api.claimTask(campaign.id, redditUsername, subreddit);
-      return api.enrichClaim(res, campaign, subreddit);
+      const claim = api.enrichClaim(res, campaign, subreddit);
+      // Record this tier for future anti-gaming calculations.
+      store.recordPosterTier(redditUsername, String(campaign.tier || 'tier1'));
+      return claim;
     } catch (err) {
-      if (err?.data?.error === 'no_slots_available') continue; // slot taken, try next
+      if (err?.data?.error === 'no_slots_available') continue;
       throw err;
     }
   }
-  return null; // nothing claimable of this type
+  return null;
 }
 
 // ── verify flow ──────────────────────────────────────────────
@@ -480,6 +507,7 @@ client.once(Events.ClientReady, async (c) => {
   } catch (e) {
     console.error('⚠️  Slash command registration failed:', e.message);
   }
+  initDeliveryClient(c);
   console.log('─'.repeat(50));
 });
 

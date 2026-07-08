@@ -54,5 +54,6 @@ router.post('/reject', forward);
 router.post('/release', forward);
 router.get('/submissions', forward);
 router.get('/balance', forward);
+router.get('/tasks/stats', forward);
 
 export default router;

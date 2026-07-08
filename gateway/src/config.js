@@ -23,7 +23,6 @@ export const config = {
     max: parseInt(process.env.RATE_LIMIT_MAX ?? '60', 10),
   },
 
-  // Optional shared token the frontend sends in X-Storefront-Token.
   storefrontToken: process.env.STOREFRONT_TOKEN || '',
 
   // Optional Leah control override. If RUN_BOT=true, the Redwire owner can order

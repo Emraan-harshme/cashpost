@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit';
 
 import { config, assertGatewayConfig } from './config.js';
 import proxy from './proxy.js';
+import * as session from './session.js';
 
 assertGatewayConfig();
 
@@ -63,6 +64,93 @@ if (config.storefrontToken) {
     next();
   });
 }
+
+// ── Session / auth routes ────────────────────────────────────
+
+// Issue a session JWE token after Discord OAuth + Reddit verification.
+// Client sends { discordId, discordAccessToken, redditUsername, fingerprint }.
+app.post('/v1/auth/session', async (req, res) => {
+  const { discordId, discordAccessToken, redditUsername, fingerprint } = req.body || {};
+  if (!discordId || !discordAccessToken) {
+    return res.status(400).json({ error: 'missing_fields', message: 'discordId and discordAccessToken are required' });
+  }
+  // Validate the Discord access token with Discord's API once.
+  try {
+    const discordUser = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: `Bearer ${discordAccessToken}` },
+    }).then((r) => (r.ok ? r.json() : null));
+    if (!discordUser || discordUser.id !== discordId) {
+      return res.status(401).json({ error: 'invalid_discord_token', message: 'Discord identity check failed' });
+    }
+  } catch {
+    return res.status(502).json({ error: 'discord_unreachable' });
+  }
+
+  // Optional: check server membership + send onboarding DM.
+  let inServer = false;
+  if (config.runBot) {
+    try {
+      const bot = await import('./bot/index.js');
+      inServer = bot.checkServerMembership ? bot.checkServerMembership(discordId) : false;
+      if (inServer && bot.sendOnboardingDM) {
+        bot.sendOnboardingDM(discordId).catch(() => {});
+      }
+    } catch { /* bot unavailable — skip */ }
+  }
+
+  const ip = req.get('cf-connecting-ip') || req.ip || req.socket?.remoteAddress || '';
+  const token = await session.issueSessionToken({ discordId, redditUsername: redditUsername || null, fingerprint: fingerprint || '', ip });
+
+  res.json({
+    token,
+    expiresIn: 3600,
+    discordUser: { id: discordUser.id, username: discordUser.username, avatar: discordUser.avatar },
+    inServer,
+  });
+});
+
+// Check if a Discord user is in the operator's server.
+app.get('/v1/auth/server-check', async (req, res) => {
+  const discordId = req.get('x-discord-id');
+  if (!discordId || !config.runBot) return res.json({ inServer: false, inviteUrl: null });
+  try {
+    const bot = await import('./bot/index.js');
+    const inServer = bot.checkServerMembership ? bot.checkServerMembership(discordId) : false;
+    res.json({ inServer, inviteUrl: inServer ? null : (bot.getInviteUrl ? bot.getInviteUrl() : null) });
+  } catch { res.json({ inServer: false, inviteUrl: null }); }
+});
+
+// ── Session-aware proxy ──────────────────────────────────────
+// Sends the verified Discord ID + Reddit username to the upstream API.
+app.use('/v1', async (req, res, next) => {
+  // Skip auth routes
+  if (req.path.startsWith('/auth/')) return next();
+
+  const token = (req.get('authorization')?.startsWith('Bearer ') ? req.get('authorization').slice(7) : null) || '';
+  const discordId = req.get('x-discord-id') || '';
+  const fingerprint = req.get('x-device-fingerprint') || '';
+  const ip = req.get('cf-connecting-ip') || req.ip || req.socket?.remoteAddress || '';
+
+  if (token) {
+    const result = await session.verifySessionToken(token, discordId, fingerprint, ip);
+    if (result.ok) {
+      req.discordId = result.payload.sub;
+      req.redditUsername = result.payload.reddit;
+    } else if (result.invalidate) {
+      return res.status(401).json({ error: 'session_invalid', reason: result.reason, reauth: true });
+    }
+    // If !ok && !invalidate (e.g. expired), just continue without session — the API can still handle it.
+  }
+
+  // Forward Discord ID to upstream for atomicity checks
+  if (req.discordId) {
+    req.headers['x-discord-id'] = req.discordId;
+  }
+  if (req.redditUsername && !req.headers['x-reddit-username']) {
+    req.headers['x-reddit-username'] = req.redditUsername;
+  }
+  next();
+}, proxy);
 
 // ── Proxy ───────────────────────────────────────────────────
 app.use('/v1', proxy);

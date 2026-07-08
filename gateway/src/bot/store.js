@@ -169,7 +169,6 @@ export function getWallet(discordId) {
   return state.users[discordId]?.wallet || null;
 }
 
-// Record a manual payout the operator made to a worker (bot-side bookkeeping).
 export function recordPayout(discordId, entry) {
   const u = state.users[discordId] || {};
   u.payouts = u.payouts || [];
@@ -184,9 +183,25 @@ export function totalPaid(discordId) {
   return u.payouts.reduce((n, p) => n + (Number(p.amount) || 0), 0);
 }
 
-// All users with a linked Reddit account: [{ discordId, ...record }]
 export function listLinkedUsers() {
   return Object.entries(state.users)
     .filter(([, u]) => u.redditUsername)
     .map(([discordId, u]) => ({ discordId, ...u }));
 }
+
+// ── Anti-gaming: per-poster tier history ──────────────────────
+
+export function recordPosterTier(redditUsername, tier) {
+  const entry = findByReddit(redditUsername);
+  if (!entry) return;
+  const recent = state.users[entry.discordId]?.recentTiers || [];
+  recent.push(tier);
+  if (recent.length > 10) recent.shift();
+  upsertUser(entry.discordId, { recentTiers: recent });
+}
+
+export function getPosterTierHistory(redditUsername) {
+  const entry = findByReddit(redditUsername);
+  return entry ? (entry.recentTiers || []) : [];
+}
+
