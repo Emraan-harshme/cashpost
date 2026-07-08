@@ -7,7 +7,7 @@ export const discordEnabled = !!discordClientId;
 export async function signInWithDiscord(): Promise<{ discordId: string; discordAccessToken: string; discordUser: any }> {
   if (!discordClientId) throw new Error('discord_disabled');
 
-  const redirectUri = window.location.origin + '/discord-callback';
+  const redirectUri = window.location.origin;
   const state = crypto.randomUUID();
   const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${discordClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=identify&state=${state}`;
 

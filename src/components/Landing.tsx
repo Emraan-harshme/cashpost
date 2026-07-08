@@ -84,7 +84,7 @@ export default function Landing({ onGetStarted }: LandingProps) {
           <button onClick={onGetStarted} className="inline-flex items-center gap-2 bg-lime-400 hover:bg-lime-300 text-black font-bold py-3 px-8 uppercase tracking-[0.2em] text-sm transition-all">
             Start earning <ChevronRight className="w-4 h-4" />
           </button>
-          <p className="text-slate-600 text-[10px] uppercase tracking-widest mt-3">verification uses your reddit account</p>
+          <p className="text-slate-600 text-[10px] uppercase tracking-widest mt-3">you'll verify your Reddit account after login</p>
         </section>
       </main>
 

@@ -43,6 +43,8 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_GATEWAY_URL
+      - key: VITE_DISCORD_CLIENT_ID
+        sync: false          # your Discord app's Client ID (for sign-in)
         sync: false          # <-- https://cashpost-gateway.onrender.com/v1
       - key: VITE_OPERATOR_NAME
         value: CashPost
