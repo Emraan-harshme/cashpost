@@ -47,6 +47,7 @@ async function forward(req, res) {
 
 // ── Poster-safe surface (mirrors what the storefront templates call) ──
 router.post('/accounts/verify', forward);
+router.get('/me', forward);
 router.get('/campaigns', forward);
 router.post('/claim', forward);
 router.post('/submit', forward);

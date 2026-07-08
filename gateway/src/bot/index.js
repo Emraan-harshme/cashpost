@@ -97,7 +97,7 @@ async function claimOneTask(redditUsername, type) {
 async function doVerify(interaction, username) {
   username = username.replace(/^u\//i, '').trim();
   try {
-    const res = await api.verifyAccount(username);
+    const res = await api.verifyAccount(username, interaction.user.id);
     if (res.status === 'verified' || res.status === 'already_registered') {
       store.upsertUser(interaction.user.id, { redditUsername: username, pendingVerify: null });
       return interaction.editReply({ content: `✅ Verified! Linked to **u/${username}**. Set your payout with **/wallet**, then use **/gettask** to pick up your first task.` });
@@ -114,7 +114,7 @@ async function doVerify(interaction, username) {
 
 async function recheckVerify(interaction, username) {
   try {
-    const res = await api.verifyAccount(username);
+    const res = await api.verifyAccount(username, interaction.user.id);
     if (res.status === 'verified' || res.status === 'already_registered') {
       store.upsertUser(interaction.user.id, { redditUsername: username, pendingVerify: null });
       return interaction.editReply({ content: `✅ Verified! Linked to **u/${username}**. Set your payout with **/wallet**, then use **/gettask** to pick up your first task.`, embeds: [], components: [] });
@@ -129,7 +129,7 @@ async function recheckVerify(interaction, username) {
 // ── get task flow ────────────────────────────────────────────
 
 async function doGetTask(interaction, type) {
-  const rec = store.getUser(interaction.user.id);
+  const rec = await recoverOrNull(interaction);
   if (!rec?.redditUsername) return interaction.editReply({ embeds: [ui.needVerifyEmbed()] });
 
   // Already holding a live task?
@@ -171,7 +171,7 @@ async function doGetTask(interaction, type) {
 // ── submit / reject ──────────────────────────────────────────
 
 async function doSubmit(interaction, url) {
-  const rec = store.getUser(interaction.user.id);
+  const rec = await recoverOrNull(interaction);
   if (!rec?.redditUsername) return interaction.editReply({ embeds: [ui.needVerifyEmbed()] });
   if (!claimIsLive(rec.activeClaim)) {
     if (rec.activeClaim) store.clearActiveClaim(interaction.user.id);
@@ -283,6 +283,22 @@ async function doSetWallet(interaction, method, rawAddress) {
 }
 
 // ── operator: payout report ──────────────────────────────────
+
+// Silent recovery: if the bot lost its local state (restart), check the API
+// for the Discord→Reddit mapping stored during verify. Returns the record or
+// null (caller shows a gentle re-verify prompt).
+async function recoverOrNull(interaction) {
+  let rec = store.getUser(interaction.user.id);
+  if (rec?.redditUsername) return rec;
+  try {
+    const me = await api.getMe(interaction.user.id);
+    if (me?.linked) {
+      store.upsertUser(interaction.user.id, { redditUsername: me.redditUsername });
+      return store.getUser(interaction.user.id);
+    }
+  } catch { /* API unreachable */ }
+  return null;
+}
 
 async function doReport(interaction) {
   const users = store.listLinkedUsers();

@@ -35,8 +35,16 @@ export async function apiFetch(path, options = {}) {
 
 // ── High-level calls mirroring each website action ───────────
 
-export const verifyAccount = (username) =>
-  apiFetch('/accounts/verify', { method: 'POST', body: JSON.stringify({ username }) });
+export const verifyAccount = (username, discordId) =>
+  apiFetch('/accounts/verify', {
+    method: 'POST',
+    body: JSON.stringify({ username }),
+    headers: discordId ? { 'x-discord-id': discordId } : {},
+  });
+
+// Bot recovery — check if a Discord ID is linked to a Reddit username.
+export const getMe = (discordId) =>
+  apiFetch('/me', { headers: discordId ? { 'x-discord-id': discordId } : {} });
 
 export const getCampaigns = async (username) => {
   const params = new URLSearchParams();
