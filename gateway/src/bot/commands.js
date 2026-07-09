@@ -57,6 +57,13 @@ export const commands = [
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
     .addUserOption((o) => o.setName('user').setDescription('The poster to unsuspend').setRequired(true)),
 
+  new SlashCommandBuilder()
+    .setName('submitfor')
+    .setDescription('(Operator) Submit a post URL on behalf of a poster')
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+    .addUserOption((o) => o.setName('user').setDescription('The poster whose task you are submitting').setRequired(true))
+    .addStringOption((o) => o.setName('url').setDescription('Direct link to the Reddit post (must start with https://reddit.com/)').setRequired(true)),
+
   // Operator-only: payout report (who is owed how much + their wallet) as CSV.
   new SlashCommandBuilder()
     .setName('report')

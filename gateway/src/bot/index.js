@@ -386,6 +386,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
           return interaction.reply({ content: `✅ u/${rec.redditUsername} has been unsuspended.`, ...EPH });
         } catch { return interaction.reply({ content: '❌ Failed to unsuspend.', ...EPH }); }
       }
+      if (name === 'submitfor') {
+        const target = interaction.options.getUser('user');
+        const url = interaction.options.getString('url');
+        if (!api.isValidRedditUrl(url)) return interaction.reply({ content: '❌ URL must be a direct link to your Reddit post starting with https://reddit.com/', ...EPH });
+        const rec = store.getUser(target.id);
+        if (!claimIsLive(rec?.activeClaim)) return interaction.reply({ content: '📭 This poster has no active task to submit.', ...EPH });
+        try {
+          await api.submitPost(rec.activeClaim.claim_id, url);
+          const payout = Number(rec.activeClaim.payout).toFixed(2);
+          await operatorLog(client, ui.logEvent('📮 Post submitted (by operator)', 0x22c55e, `<@${target.id}>`, rec.redditUsername, { name: 'Post', value: url, inline: true }));
+          store.recordSubmit();
+          store.setLastTaskAt(target.id);
+          store.clearActiveClaim(target.id);
+          return interaction.reply({ content: `✅ Submitted for <@${target.id}> (u/${rec.redditUsername}). Post is verifying — payout **$${payout}** on clear.`, ...EPH });
+        } catch (err) { return interaction.reply({ content: `❌ ${err?.data?.message || 'Failed to submit post URL'}.`, ...EPH }); }
+      }
       if (name === 'stats') {
         return interaction.reply({ embeds: [ui.statsEmbed(store.getStats())], ...EPH });
       }
