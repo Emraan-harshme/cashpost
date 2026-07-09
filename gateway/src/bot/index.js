@@ -397,26 +397,41 @@ client.on(Events.InteractionCreate, async (interaction) => {
         let claim = rec.activeClaim;
         // If claim expired or doesn't exist, try to find a matching campaign.
         if (!claimIsLive(claim)) {
-          // Parse subreddit from the URL.
           const subMatch = url.match(/reddit\.com\/r\/([^/]+)/);
           const subFromUrl = subMatch ? subMatch[1] : null;
           const campaigns = await api.getCampaigns(rec.redditUsername);
+          const candidates = subFromUrl
+            ? campaigns.filter(c => (c.subreddits || []).some(s => (s || '').replace(/^r\//i, '').toLowerCase() === subFromUrl.toLowerCase()))
+            : [];
+
           let match = null;
-          if (subFromUrl) {
-            match = campaigns.find(c => (c.subreddits || []).some(s => {
-              const clean = (s || '').replace(/^r\//i, '').toLowerCase();
-              return clean === subFromUrl.toLowerCase();
-            }));
+          if (candidates.length === 1) {
+            match = candidates[0];
+          } else if (candidates.length > 1) {
+            // Multiple campaigns target this sub — fetch the post content
+            // from the Reddit gateway and compare against campaign content.
+            try {
+              const isComment = url.includes('/comment/');
+              const contentType = await api.fetchRedditContent(url, isComment);
+              let bestScore = 0;
+              for (const c of candidates) {
+                const pc = c.post_content || {};
+                const texts = isComment
+                  ? (pc.prewrittenComments || []).map(t => String(t).toLowerCase())
+                  : [String(pc.title || '').toLowerCase(), String(pc.body || '').toLowerCase()];
+                const searchText = String(contentType || '').toLowerCase();
+                const score = texts.reduce((s, t) => s + (t.length > 0 && searchText.includes(t.slice(0, 60)) ? 60 : 0) + (t.length > 0 && searchText.includes(t.slice(0, 30)) ? 15 : 0), 0);
+                if (score > bestScore) { bestScore = score; match = c; }
+              }
+            } catch {}
           }
-          if (!match) {
-            // Fallback: try the original claim's campaign if it had one.
-            const oldCid = claim?.campaign_id;
-            if (oldCid) match = campaigns.find(c => c.id === oldCid);
+          // Fallback: try original claim's campaign
+          if (!match && claim?.campaign_id) {
+            match = campaigns.find(c => c.id === claim.campaign_id);
           }
           if (!match) {
             return interaction.editReply({ content: '📭 No matching campaign found for this URL. The poster may need to claim a task first.' });
           }
-          // Claim the matching campaign for this poster.
           try {
             const subreddit = match.subreddits[0];
             const res = await api.claimTask(match.id, rec.redditUsername, subreddit);

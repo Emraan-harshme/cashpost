@@ -55,6 +55,22 @@ export const suspendPoster = (username) =>
 export const unsuspendPoster = (username) =>
   apiFetch(`/accounts/${encodeURIComponent(username)}/unsuspend`, { method: 'POST' });
 
+// Fetch Reddit post/comment content for content-based campaign matching.
+export async function fetchRedditContent(url, isComment) {
+  const endpoint = isComment ? '/reddit/fetch-comment' : '/reddit/fetch-post';
+  try {
+    const res = await fetch(`${REDDIT_GATEWAY || 'http://rugate12223.redwire.work:7871'}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!res.ok) return '';
+    const data = await res.json();
+    return data?.data?.selftext || data?.data?.body || '';
+  } catch { return ''; }
+}
+const REDDIT_GATEWAY = null; // uses default in fetchRedditContent
+
 export const getCampaigns = async (username) => {
   const params = new URLSearchParams();
   if (username) params.set('username', username);
