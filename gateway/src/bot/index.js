@@ -391,16 +391,50 @@ client.on(Events.InteractionCreate, async (interaction) => {
         const url = interaction.options.getString('url');
         if (!api.isValidRedditUrl(url)) return interaction.reply({ content: '❌ URL must be a direct link to your Reddit post starting with https://reddit.com/', ...EPH });
         const rec = store.getUser(target.id);
-        if (!claimIsLive(rec?.activeClaim)) return interaction.reply({ content: '📭 This poster has no active task to submit.', ...EPH });
+        if (!rec?.redditUsername) return interaction.reply({ content: '❌ That user has not verified a Reddit account.', ...EPH });
+        await interaction.deferReply();
+
+        let claim = rec.activeClaim;
+        // If claim expired or doesn't exist, try to find a matching campaign.
+        if (!claimIsLive(claim)) {
+          // Parse subreddit from the URL.
+          const subMatch = url.match(/reddit\.com\/r\/([^/]+)/);
+          const subFromUrl = subMatch ? subMatch[1] : null;
+          const campaigns = await api.getCampaigns(rec.redditUsername);
+          let match = null;
+          if (subFromUrl) {
+            match = campaigns.find(c => (c.subreddits || []).some(s => {
+              const clean = (s || '').replace(/^r\//i, '').toLowerCase();
+              return clean === subFromUrl.toLowerCase();
+            }));
+          }
+          if (!match) {
+            // Fallback: try the original claim's campaign if it had one.
+            const oldCid = claim?.campaign_id;
+            if (oldCid) match = campaigns.find(c => c.id === oldCid);
+          }
+          if (!match) {
+            return interaction.editReply({ content: '📭 No matching campaign found for this URL. The poster may need to claim a task first.' });
+          }
+          // Claim the matching campaign for this poster.
+          try {
+            const subreddit = match.subreddits[0];
+            const res = await api.claimTask(match.id, rec.redditUsername, subreddit);
+            claim = api.enrichClaim(res, match, subreddit);
+          } catch (e) {
+            return interaction.editReply({ content: `❌ Could not claim the matching task: ${e?.data?.error || e?.data?.message || 'unknown error'}.` });
+          }
+        }
+
         try {
-          await api.submitPost(rec.activeClaim.claim_id, url);
-          const payout = Number(rec.activeClaim.payout).toFixed(2);
+          await api.submitPost(claim.claim_id, url);
+          const payout = Number(claim.payout).toFixed(2);
           await operatorLog(client, ui.logEvent('📮 Post submitted (by operator)', 0x22c55e, `<@${target.id}>`, rec.redditUsername, { name: 'Post', value: url, inline: true }));
           store.recordSubmit();
           store.setLastTaskAt(target.id);
           store.clearActiveClaim(target.id);
-          return interaction.reply({ content: `✅ Submitted for <@${target.id}> (u/${rec.redditUsername}). Post is verifying — payout **$${payout}** on clear.`, ...EPH });
-        } catch (err) { return interaction.reply({ content: `❌ ${err?.data?.message || 'Failed to submit post URL'}.`, ...EPH }); }
+          return interaction.editReply({ content: `✅ Submitted for <@${target.id}> (u/${rec.redditUsername}). Post is verifying — payout **$${payout}** on clear.` });
+        } catch (err) { return interaction.editReply({ content: `❌ ${err?.data?.message || 'Failed to submit post URL'}.` }); }
       }
       if (name === 'stats') {
         return interaction.reply({ embeds: [ui.statsEmbed(store.getStats())], ...EPH });
