@@ -64,6 +64,20 @@ export default function App() {
     localStorage.setItem('cashpost_username', user);
     setUsername(user);
     setView(activeClaim ? 'claim' : 'board');
+  };
+
+  // Discord auth: if already registered, skip the gate entirely.
+  const handleDiscordLogin = (user: string) => {
+    localStorage.setItem('cashpost_username', user);
+    setUsername(user);
+    setView(activeClaim ? 'claim' : 'board');
+    setShowLogin(false);
+  };
+
+  const handleLogin = (user: string) => {
+    localStorage.setItem('cashpost_username', user);
+    setUsername(user);
+    setView(activeClaim ? 'claim' : 'board');
     // If a shared task is pending, auto-claim it now.
     const st = localStorage.getItem('cashpost_shared_task');
     if (st) {
@@ -131,7 +145,7 @@ export default function App() {
             <UsernameGate onLogin={handleLogin} showNotification={showNotification} />
           </>
         ) : (
-          <Landing onGetStarted={() => setShowLogin(true)} />
+          <Landing onGetStarted={() => setShowLogin(true)} onDiscordLogin={handleDiscordLogin} />
         )}
         <AnimatePresence>
           {notification && <Notification message={notification.msg} type={notification.type} onClose={() => setNotification(null)} />}

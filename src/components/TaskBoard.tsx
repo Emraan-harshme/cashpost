@@ -18,6 +18,9 @@ export default function TaskBoard({ username, onClaimSuccess, showNotification }
 
   useEffect(() => {
     fetchCampaigns();
+    // Poll for live updates every 6s so claimed tasks disappear without error.
+    const interval = setInterval(fetchCampaigns, 6000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchCampaigns = async () => {
