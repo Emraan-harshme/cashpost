@@ -1,23 +1,31 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import { signInWithDiscord } from '../discord';
-import { establishSession, checkServerMembership } from '../api';
 import { Terminal, Zap, ShieldCheck, Wallet, ChevronRight } from 'lucide-react';
 
 interface LandingProps {
   onGetStarted: () => void;
+  onDiscordLogin?: (username: string) => void;
 }
 
-export default function Landing({ onGetStarted }: LandingProps) {
+export default function Landing({ onGetStarted, onDiscordLogin }: LandingProps) {
   const [discordBusy, setDiscordBusy] = useState(false);
 
   const handleDiscord = async () => {
     setDiscordBusy(true);
     try {
       const du = await signInWithDiscord();
-      if (du?.discordId) {
-        await establishSession(du.discordId, du.discordAccessToken, '');
-        await checkServerMembership();
+      if (du?.discordId && onDiscordLogin) {
+        try {
+          const baseUrl = import.meta.env.VITE_GATEWAY_URL;
+          if (baseUrl) {
+            const meResp = await fetch(`${baseUrl}/v1/me`, { headers: { 'x-discord-id': du.discordId } });
+            if (meResp.ok) {
+              const me = await meResp.json();
+              if (me?.linked && me?.redditUsername) { setDiscordBusy(false); onDiscordLogin(me.redditUsername); return; }
+            }
+          }
+        } catch {}
       }
     } catch {}
     setDiscordBusy(false);

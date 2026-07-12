@@ -60,12 +60,6 @@ export default function App() {
     }
   }, []);
 
-  const handleLogin = (user: string) => {
-    localStorage.setItem('cashpost_username', user);
-    setUsername(user);
-    setView(activeClaim ? 'claim' : 'board');
-  };
-
   // Discord auth: if already registered, skip the gate entirely.
   const handleDiscordLogin = (user: string) => {
     localStorage.setItem('cashpost_username', user);

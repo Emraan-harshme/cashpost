@@ -702,7 +702,7 @@ export async function startBot() {
 }
 
 // Allow running the bot standalone: `node src/bot/index.js`
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`) {
   assertRuntimeConfig();
   startBot().catch((e) => {
     console.error('❌  Bot failed to start:', e.message);

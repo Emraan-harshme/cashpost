@@ -25,6 +25,10 @@ async function forward(req, res) {
       'x-api-key': config.apiKey,
     },
   };
+  for (const h of ['x-discord-id', 'x-reddit-username', 'x-device-fingerprint']) {
+    const v = req.headers[h];
+    if (v) init.headers[h] = v;
+  }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     init.body = JSON.stringify(req.body ?? {});
   }

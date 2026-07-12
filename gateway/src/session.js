@@ -38,7 +38,7 @@ export async function issueSessionToken({ discordId, redditUsername, fingerprint
   return await new jose.CompactEncrypt(
     new TextEncoder().encode(JSON.stringify(payload))
   )
-    .setProtectedHeader({ alg: 'A256GCM', enc: 'A256GCM' })
+    .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .encrypt(key);
 }
 
